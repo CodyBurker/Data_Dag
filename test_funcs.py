@@ -1,6 +1,7 @@
 import unittest
 import pandas as pd
 import os
+import pytest
 
 from data_dag import lazy, dep, pipeline, lazy_read_csv
 
@@ -112,17 +113,16 @@ class TestLazyReadCSV(unittest.TestCase):
 
 if __name__ == "__main__":
     
-    # Example code
-    ex_pipe = pipeline()
-    ex_pipe.define({
-        "first": lazy_read_csv(
-            params = {'filepath_or_buffer': "test.csv"}),
+    # # Example code
+    # ex_pipe = pipeline()
+    # ex_pipe.define({
+    #     "first": lazy_read_csv(
+    #         params = {'filepath_or_buffer': "test.csv"}),
 
-        "second": lazy(
-            func = lambda x,y: x.rename(**y), 
-            params = {'x': dep('first'), 'y': {'columns': {'hello': 'what'}}})
-    })
+    #     "second": lazy(
+    #         func = lambda x,y: x.rename(**y), 
+    #         params = {'x': dep('first'), 'y': {'columns': {'hello': 'what'}}})
+    # })
     
-
     unittest.main()
     

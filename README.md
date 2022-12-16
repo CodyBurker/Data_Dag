@@ -28,7 +28,6 @@ This aims to be a lightweight, flexible tool to support quick exploration by pro
 Defining a pipeline is as simple as defining a dictionary of steps. Each step is a function that can take in one (or more) datasets as a parameter and exports them. The steps can be defined in any order, and the pipeline will automatically figure out the dependencies between steps.
 
 ```python
-```python
 from data_dag import lazy, dep, pipeline, lazy_read_csv
 ex_pipe = pipeline()
 

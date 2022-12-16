@@ -25,7 +25,30 @@ class pipeline:
         return 0
     
     def get_step(self, step:str):
-        return self.pipes[step].eval()
+        if not isinstance(step, str):
+            raise Exception('Step must be a string')
+        # Check if step is in the pipeline
+        if step not in self.pipes.keys():
+            raise Exception(f'Step {step} not in pipeline')
+        # Check if step has valid cache
+        if self.pipes[step].tainted:
+            # For each parameter in the step, if it is a dep, then get it's value
+            # Otherwise, just use the value
+            params = {}
+            for k,v in self.pipes[step].params.items():
+                if isinstance(v, dep):
+                    params[k] = self.get_step(v.step())
+                else:
+                    params[k] = v
+            # If there is a func and it is a lambda, then evaluate it
+            if hasattr(self.pipes[step], 'func') and isinstance(self.pipes[step].func, type(lambda:0)):
+                # Evaluate the function with the parameters
+                self.pipes[step].results = self.pipes[step].func(**params)
+            # Otherwise, assume it has an eval function and use that with the parameters
+            else:
+                self.pipes[step].results = self.pipes[step].eval()
+        return(self.pipes[step].results)    
+
 
 # Lazy Evaluation Node
 class lazy:
@@ -50,10 +73,10 @@ class lazy:
         if len(x) != len(params.keys()):
             raise Exception('All parameter names must be strings')
 
-        # Check the values are either strings or dep
-        x = [x for x in params.values() if isinstance(x, str) or isinstance(x, dep)]
-        if len(x) != len(params.values()):
-            raise Exception('All parameter values must be strings or deps')
+        # # Check the values are either strings or dep
+        # x = [x for x in params.values() if isinstance(x, str) or isinstance(x, dep)]
+        # if len(x) != len(params.values()):
+        #     raise Exception('All parameter values must be strings or deps')
 
         return(None)
     
@@ -68,24 +91,6 @@ class lazy:
         # Might be a better way to do this.
         return(0)
     
-    def eval(self):
-        # If cache is valid, return stored input
-        # Else Recursively evaluate inputs
-        # Then evalute self.
-        if not self.tainted and self.results is not None:
-            return self.results
-        else:
-            # Evaluate any dep params
-            new_params = {}
-            for param in iter(self.params):
-                if isinstance(self.params[param], dep):
-                    new_params[param] = self.params[param].eval()
-                else:
-                    new_params[param] = self.params[param]
-            # Cache results
-            self.results = self.func(**self.params)
-            print("Evaluate!")
-    
 import hashlib
 # Or are results maybe cached here?
 class dep:
@@ -95,6 +100,8 @@ class dep:
         return 0
     def __str__(self) -> str:
         return("dep")
+    def step(self) -> str:
+        return(self.prev_node)
 
 # Helper graph function
 # From 
@@ -126,11 +133,12 @@ class Graph:
     
 class lazy_read_csv:
     # This is a method, init guvnah?
-    def __init__(self, filepath, params: dict) -> None:
+    def __init__(self, params: dict) -> None:
         self.hash = None
-        self.filepath = filepath
-        self.cache = None
         self.params = params
+        self.cache = None
+        self.tainted = True
+        self.filepath = params['filepath_or_buffer']
         pass
 
     # Read in the dataframe
@@ -150,5 +158,7 @@ class lazy_read_csv:
             return self.cache
         else:
             self.hash = new_hash
-            self.cache = pd.read_csv(self.filepath, **self.params)
+            self.cache = pd.read_csv(**self.params)
+        # self.cache = pd.read_csv(**self.params)
+        # self.cache = pd.read_csv('test.csv')
         return self.cache

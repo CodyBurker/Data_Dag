@@ -9,15 +9,16 @@ class pipeline:
         self.pipes = {}
         return None
     
-    def define(self, pipes: dict):
+    # # Given a list of lazy steps, create a pipeline
+    # def define(self, pipes: list):
 
-        # Check that pipes is actually a dict
-        if not isinstance(pipes, dict):
-            raise Exception('Pipeline must be a dictionary')
+    #     # Check that pipes is actually a dict
+    #     if not isinstance(pipes, dict):
+    #         raise Exception('Pipeline must be a dictionary')
 
-        # Create a graph and sort it topologically
-        # get count of number of dependencies in graph
-        self.pipes = pipes
+    #     # Create a graph and sort it topologically
+    #     # get count of number of dependencies in graph
+    #     self.pipes = pipes
         
 
     def preview(self):
@@ -47,7 +48,31 @@ class pipeline:
             # Otherwise, assume it has an eval function and use that with the parameters
             else:
                 self.pipes[step].results = self.pipes[step].eval()
-        return(self.pipes[step].results)    
+        return(self.pipes[step].results)   
+    # Add step to pipeline
+    def add_step(self, new_step):
+        # Check that the step is a lazy_step
+        if not isinstance(new_step, lazy_step):
+            raise Exception('Step must be a lazy_step')
+        # Check that the step doesn't already exist
+        if new_step.name in self.pipes.keys():
+            # If it exists, compare the hashes to see if it is the same
+            if new_step.hash() == self.pipes[new_step.name].hash():
+                # If it is the same, then do nothing
+                return None
+            else:
+                # If it is different, then replace it and invalidate all downstream steps
+                self.pipes[lazy_step.name] = new_step
+                self.pipes[lazy_step.name].tainted = True
+                # TODO: Invalidate downstream steps
+        # Add the step
+        self.pipes[new_step.name] = new_step
+        return None
+    
+    # Override gt operator to add a step
+    def __gt__(self, other):
+        self.add_step(other)
+        return None
 
 
 # Lazy Evaluation Node
@@ -162,3 +187,25 @@ class lazy_read_csv:
         # self.cache = pd.read_csv(**self.params)
         # self.cache = pd.read_csv('test.csv')
         return self.cache
+
+## Class to represent a node in the graph/ a single step in the pipeline
+class lazy_step:
+    # This is a method, init guvnah?
+    def __init__(self, name, func, params: dict) -> None:
+        self.hash = None
+        self.params = params
+        self.cache = None
+        self.tainted = True
+        self.func = func
+        self.name = name
+        pass
+
+    # Create a hash of the function and parameters
+    # So that we can check if the function or parameters have changed
+    def hash(self):
+        # Hash the function
+        func_hash = hashlib.md5(self.func.__code__.co_code).hexdigest()
+        # Hash the parameters
+        param_hash = hashlib.md5(str(self.params).encode('utf-8')).hexdigest()
+        # Combine the two
+        return func_hash + param_hash

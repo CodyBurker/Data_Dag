@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import pytest
 
-from data_dag import lazy, dep, pipeline, lazy_read_csv
+from data_dag import lazy, dep, pipeline, lazy_read_csv, lazy_step
 
 class TestLazy(unittest.TestCase):
 
@@ -112,5 +112,15 @@ class TestLazyReadCSV(unittest.TestCase):
         self.assertTrue(ex_pipe.get_step('second').columns[0] == 'what')
 
 if __name__ == "__main__":
-    unittest.main()
+    # unittest.main()
+    pipetest = pipeline()
+
+    pipetest.add_step(
+        lazy_step('hello', print, {'hello': 'world'})
+    )
+
+    pipetest >\
+        lazy_step('hello2', print, {'hello': 'world2'})
+
+    print(pipetest.pipes)
     

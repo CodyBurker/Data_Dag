@@ -112,18 +112,5 @@ class TestLazyReadCSV(unittest.TestCase):
         self.assertTrue(ex_pipe.get_step('second').columns[0] == 'what')
 
 if __name__ == "__main__":
-    
-    # # Example code
-    # ex_pipe = pipeline()
-    # ex_pipe.define({
-    #     "first": lazy_read_csv(
-    #         params = {'filepath_or_buffer': "test.csv"}),
-
-    #     "second": lazy(
-    #         func = lambda x,y: x.rename(**y), 
-    #         params = {'x': dep('first'), 'y': {'columns': {'hello': 'what'}}})
-    # })
-    # Change!
-    
     unittest.main()
     

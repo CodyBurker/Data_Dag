@@ -7,6 +7,10 @@ class df2:
     # def __init__(self):
     #     self.df = None
 
+    def read_csv(self, file):
+        self.df = pd.read_csv(file)
+        return self
+
     def filter(self, condition):
         self.df = self.df[condition]
         return self
@@ -17,11 +21,11 @@ class df2:
         return self
 
     def groupby(self, *args):
-        self.df = self.df.groupby(args)
+        self.df = self.df.groupby(list(args))
         return self
 
-    def summarize(self, **kwargs):
-        self.df = self.df.aggregate(**kwargs)
+    def summarize(self, *kwargs):
+        self.df = self.df.aggregate(*kwargs)
         return self
     
     def collect(self):
@@ -35,11 +39,12 @@ class df2:
         return self
     
     def __str__(self):
+        if self.df is None:
+            return("DataFrame is not initialized")
         return str(self.df)
     
     def __radd__(self, other):
-        print('RADD')
         if isinstance(other, pd.DataFrame):
-            print('input:')
-            # print(other)
             self.df = other
+        else:
+            raise TypeError(f"Can only concatenate DplyrDataFrame with a dataframe, not {type(other)}")

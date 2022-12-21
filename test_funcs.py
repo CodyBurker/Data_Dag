@@ -8,12 +8,17 @@ from data_dag import *
 
 # x = df2(pd.read_csv('test.csv'))
 
-x = pd.read_csv('test.csv') + \
-    df2()
-
-print(x)
-
 print(
-    pd.read_csv('test.csv') + \
-        df2()
+    df2().
+    read_csv('addresses.csv')
+    # select('hello','world').
+    # groupby('hello').
+    # summarize(['sum'])
 )
+
+# print(x)
+
+# print(
+#     pd.read_csv('test.csv') + \
+#         df2()
+# )

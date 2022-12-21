@@ -41,7 +41,16 @@ class df2:
         
         self.df = self.df.aggregate(aggregations).reset_index()
 
-        self.df = self.df.rename(columns={col: name for name, func in kwargs.items() for col in self.groupby_columns})
+        col_names = {
+            x : x for x in self.df.columns[:-len(aggregations):] # Get original column names
+        }
+
+        col_names.update({
+            x:y for x,y in zip(self.df.columns,kwargs.keys()) # Get aggregate names: passed kwargs
+        })
+
+        self.df.rename(col_names)
+
         return self
     
     def collect(self):

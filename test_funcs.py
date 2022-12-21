@@ -23,9 +23,10 @@ from data_dag import *
 
 print(df2().
     read_csv('mtcars.txt').
-    select('mpg').
-    filter('mpg < 20').
-    summarize('count')
+    select('mpg', 'gear','cyl').
+    groupby('gear', 'cyl').
+    summarize(avg='mpg:mean')
+
 )
 
 

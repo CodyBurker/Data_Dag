@@ -3,6 +3,7 @@ import pandas as pd
 class df2:
     def __init__(self,df=None):
         self.df = df
+        self.groupby_columns = []
     
     # def __init__(self):
     #     self.df = None
@@ -26,11 +27,21 @@ class df2:
         return self
 
     def groupby(self, *args):
-        self.df = self.df.groupby(list(args))
+        # self.df = self.df.groupby(list(args))
+        self.groupby_columns = list(args)
         return self
 
-    def summarize(self, *args):
-        self.df = self.df.aggregate(list(args))
+    def summarize(self, **kwargs):
+        if self.groupby_columns:
+            self.df = self.df.groupby(self.groupby_columns)
+        aggregations = {}
+        for name, func in kwargs.items():
+            col, func_name = func.split(":")
+            aggregations[col] = func_name
+        
+        self.df = self.df.aggregate(aggregations).reset_index()
+
+        self.df = self.df.rename(columns={col: name for name, func in kwargs.items() for col in self.groupby_columns})
         return self
     
     def collect(self):

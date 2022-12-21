@@ -7,13 +7,18 @@ class df2:
     # def __init__(self):
     #     self.df = None
 
-    def read_csv(self, file):
-        self.df = pd.read_csv(file)
+    def read_csv(self, *args, **kwargs):
+        self.df = pd.read_csv(*args, **kwargs)
         return self
 
     def filter(self, condition):
-        self.df = self.df[condition]
+        self.df = self.df.query(condition)
         return self
+    # def filter(self, condition):
+    #     def filter_func(row):
+    #         return eval(condition)
+    #     self.df = self.df[self.df.apply(filter_func, axis=1)]
+    #     return self
 
     def select(self, *args):
         args = list(args)
@@ -24,8 +29,8 @@ class df2:
         self.df = self.df.groupby(list(args))
         return self
 
-    def summarize(self, *kwargs):
-        self.df = self.df.aggregate(*kwargs)
+    def summarize(self, *args):
+        self.df = self.df.aggregate(list(args))
         return self
     
     def collect(self):

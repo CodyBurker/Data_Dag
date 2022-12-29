@@ -1,16 +1,26 @@
 import pandas as pd
 
-class df2:
-    def __init__(self,df=None):
+class Df2:
+    """
+    TODO: Document
+    """
+    def __init__(self,df=None, lazy = False):
         self.df = df
         self.groupby_columns = []
+        self.lazy = lazy
+        self.operations = []
+        
     
     # def __init__(self):
     #     self.df = None
 
     def read_csv(self, *args, **kwargs):
-        self.df = pd.read_csv(*args, **kwargs)
-        return self
+        if self.lazy:
+            self.operations.append(("read_csv",args,kwargs))
+            return self
+        else:
+            self.df = pd.read_csv(*args, **kwargs)
+            return self
 
     def filter(self, condition):
         self.df = self.df.query(condition)
@@ -54,6 +64,7 @@ class df2:
         return self
     
     def collect(self):
+        # Apply operations
         return self.df
 
     def __add__(self, other):

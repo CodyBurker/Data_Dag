@@ -1,11 +1,15 @@
 import pandas as pd
 
+# Todo
+## Rewrite read_csv
+
 class Df2:
     """
     TODO: Document
     """
     def __init__(self,df=None, lazy = False):
         self.df = df
+        self.collected_df = None
         self.groupby_columns = []
         self.lazy = lazy
         # List of lambda functions to apply if lazy
@@ -28,32 +32,8 @@ class Df2:
     def __groupby__(self, *args):
         return lambda df: df.groupby(list(args))
     
-    # def __summarize__(self, **kwargs):
-        """
-        Dplyr summarize function
-        Given a kwargs dictionary, of the form {new_col_name: "col_name:func_name"}
-        apply the functions to the columns and return a new dataframe with the
-        results.
-        """
-
-        # Parse Kwargs into a dictionary of {col_name: func_name}
-        aggregations = {}
-        for name, func in kwargs.items():
-            col, func_name = func.split(":")
-            aggregations[col] = func_name
         
-        self.df = self.df.aggregate(aggregations).reset_index()
-
-        col_names = {
-            x : x for x in self.df.columns[:-len(aggregations):] # Get original column names
-        }
-
-        col_names.update({
-            x:y for x,y in zip(self.df.columns,kwargs.keys()) # Get aggregate names: passed kwargs
-        })
-        self.df.rename(col_names)
-        
-    def __summarize__(**kwargs):
+    def __summarize__(self,**kwargs):
         def _summarize(df):
             """
             Dplyr summarize function
@@ -90,7 +70,7 @@ class Df2:
             self.operations.append(self.__filter__(condition))
             return self
         else:
-            self.df = self.df.query(condition)
+            self.df = self.__filter__(condition)(self.df)
             return self
     
     def select(self, *args):
@@ -109,46 +89,21 @@ class Df2:
             self.df = self.__groupby__(*args)(self.df)
             return self
     
-
-    # def filter(self, condition):
-    #     self.df = self.df.query(condition)
-    #     return self
-    # def filter(self, condition):
-    #     def filter_func(row):
-    #         return eval(condition)
-    #     self.df = self.df[self.df.apply(filter_func, axis=1)]
-    #     return self
-
-    # def groupby(self, *args):
-    #     # self.df = self.df.groupby(list(args))
-    #     self.groupby_columns = list(args)
-    #     return self
-
-    # def summarize(self, **kwargs):
-    #     if self.groupby_columns:
-    #         self.df = self.df.groupby(self.groupby_columns)
-    #     aggregations = {}
-    #     for name, func in kwargs.items():
-    #         col, func_name = func.split(":")
-    #         aggregations[col] = func_name
-        
-    #     self.df = self.df.aggregate(aggregations).reset_index()
-
-    #     col_names = {
-    #         x : x for x in self.df.columns[:-len(aggregations):] # Get original column names
-    #     }
-
-    #     col_names.update({
-    #         x:y for x,y in zip(self.df.columns,kwargs.keys()) # Get aggregate names: passed kwargs
-    #     })
-
-    #     self.df.rename(col_names)
-
-    #     return self
+    def summarize(self, **kwargs):
+        if self.lazy:
+            self.operations.append(self.__summarize__(**kwargs))
+            return self
+        else:
+            self.df = self.__summarize__(**kwargs)(self.df)
+            return self
     
     def collect(self):
-        # Apply operations
-        return self.df
+        if self.lazy:
+            for operation in self.operations:
+                self.collected_df = operation(self.df)
+            return self.collected_df
+        else:
+            return self.df
 
     def __add__(self, other):
         if isinstance(other, DplyrDataFrame):

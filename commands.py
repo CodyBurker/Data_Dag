@@ -29,7 +29,8 @@ class select(Command):
 
     def execute(self, line: str, input_df: pl.DataFrame, env: dict):
         col_names = re.findall(r'{([\w\. \d]+)}', line)
-        return input_df.select(col_names)
+        # return input_df.select(col_names)
+        return None # Test for github action automated unit testing
     
 class read_csv(Command):
 

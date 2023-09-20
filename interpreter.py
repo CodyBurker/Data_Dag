@@ -2,8 +2,9 @@ import regex as re
 import polars as pl
 from enum import Enum
 from abc import ABC, abstractmethod
+from commands import base_funcs, CommandType
+import logging
 
-from commands import base_funcs
 
 
 class InterpreterState(Enum):
@@ -16,7 +17,8 @@ def get_command(line):
     return command
 
 class Interpreter():
-
+    def set_logging(self, level):
+        logging.basicConfig(level=level)
 
     def __init__(self) -> None:
         self.current_df = None
@@ -43,6 +45,25 @@ class Interpreter():
 
             # Check if command is in base_funcs
             if command in base_funcs:
-                func = base_funcs['command']
+                # Get Command
+                func = base_funcs[command]
+                logging.debug(f'Line {line_no}: {line}')
+                logging.debug(f'Current state: {self.state}')
+                logging.debug(f'Command : {command} of type {func.command_type}')
+                if self.state == InterpreterState.INIT and func.command_type == CommandType.INITIAL:
+                    self.current_df = func.execute(line, None, self.env)
+                    self.state = InterpreterState.MOD
+                    logging.debug(f'\tChanging state to {self.state}')
+                elif self.state == InterpreterState.MOD and func.command_type == CommandType.MODIFYING:
+                    self.current_df = func.execute(line, self.current_df, self.env)
+                    pass
+                elif self.state == InterpreterState.MOD and func.command_type == CommandType.TERMINAL:
+                    self.current_df = func.execute(line, self.current_df, self.env)
+                    self.state = InterpreterState.INIT
+                    logging.debug(f'\tChanging state to {self.state}')
+                else:
+                    # Raise error
+                    print(f'Error on line {line_no}: Invalid command {command}. Not expecting a command of type {func.command_type}')
+                    raise Exception()
             else:
                 print(f'Error on line {line_no}: Invalid command {command}. Try one of {list(base_funcs.keys())}')

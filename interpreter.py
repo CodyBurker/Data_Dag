@@ -1,10 +1,8 @@
 import regex as re
-import polars as pl
 from enum import Enum
 from abc import ABC, abstractmethod
 from commands import base_funcs, CommandType
 import logging
-
 
 
 class InterpreterState(Enum):
